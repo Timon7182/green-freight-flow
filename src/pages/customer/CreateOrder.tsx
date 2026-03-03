@@ -58,7 +58,8 @@ const CreateOrder = () => {
     if (source === "other" && !customAddress.trim()) errs.customAddress = "Укажите адрес";
     if (!deliveryType) errs.deliveryType = "Выберите тип перевозки";
     if (deliveryType === "container" && !containerType) errs.containerType = "Выберите тип контейнера";
-    if (deliveryType === "container" && containerType && !city) errs.city = "Выберите город";
+    if (deliveryType === "container" && !city) errs.city = "Выберите город";
+    if (deliveryType === "container" && !containerType) errs.containerType = "Выберите тип контейнера";
     if (!date) errs.date = "Укажите дату";
     if (!time) errs.time = "Укажите время";
     setErrors(errs);
@@ -73,7 +74,7 @@ const CreateOrder = () => {
     toast.success("Заявка успешно создана!", {
       description: "Перевозчики получат уведомление о вашей заявке.",
     });
-    navigate("/my-orders");
+    navigate("/customer/orders");
   };
 
   return (
@@ -122,7 +123,7 @@ const CreateOrder = () => {
               Куда? <span className="text-destructive">*</span>
             </div>
 
-            <RadioGroup value={deliveryType} onValueChange={(v) => { setDeliveryType(v); setContainerType(""); setCity(v === "collected" ? "Алматы" : ""); setErrors((e) => ({ ...e, deliveryType: "" })); }}>
+            <RadioGroup value={deliveryType} onValueChange={(v) => { setDeliveryType(v); setContainerType(""); setCity(v === "collected" ? "Алматы" : ""); setErrors((e) => ({ ...e, deliveryType: "", containerType: "", city: "" })); }}>
               <div className="flex items-center space-x-3 rounded-lg border border-border p-3 hover:bg-accent/30 transition-colors">
                 <RadioGroupItem value="collected" id="collected" />
                 <Label htmlFor="collected" className="cursor-pointer flex-1">Сборный</Label>
@@ -142,6 +143,15 @@ const CreateOrder = () => {
 
             {deliveryType === "container" && (
               <div className="space-y-3 animate-fade-in">
+                <Select value={city} onValueChange={(v) => { setCity(v); setErrors((e) => ({ ...e, city: "" })); }}>
+                  <SelectTrigger><SelectValue placeholder="Выберите город назначения" /></SelectTrigger>
+                  <SelectContent>
+                    {kazakhstanCities.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
                 <Select value={containerType} onValueChange={(v) => { setContainerType(v); setErrors((e) => ({ ...e, containerType: "" })); }}>
                   <SelectTrigger><SelectValue placeholder="Тип контейнера" /></SelectTrigger>
                   <SelectContent>
@@ -150,19 +160,6 @@ const CreateOrder = () => {
                   </SelectContent>
                 </Select>
                 {errors.containerType && <p className="text-xs text-destructive">{errors.containerType}</p>}
-                {containerType && (
-                  <>
-                    <Select value={city} onValueChange={(v) => { setCity(v); setErrors((e) => ({ ...e, city: "" })); }}>
-                      <SelectTrigger><SelectValue placeholder="Выберите город" /></SelectTrigger>
-                      <SelectContent>
-                        {kazakhstanCities.map((c) => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
-                  </>
-                )}
               </div>
             )}
           </div>
