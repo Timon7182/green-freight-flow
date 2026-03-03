@@ -62,7 +62,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <Truck className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">CargoKZ</h1>
+            <h1 className="text-lg font-bold text-sidebar-foreground">SilkWay</h1>
             <p className="text-xs text-muted-foreground">
               {role === "customer" ? "Заказчик" : "Перевозчик"}
             </p>
@@ -114,7 +114,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Truck className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-bold">CargoKZ</span>
+            <span className="font-bold">SilkWay</span>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
