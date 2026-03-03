@@ -33,7 +33,7 @@ const Auth = () => {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary">
             <Truck className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold">CargoKZ</h1>
+          <h1 className="text-3xl font-bold">SilkWay</h1>
         </div>
 
         {/* Progress */}
