@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ const kazakhstanCities = [
 ];
 
 const CreateOrder = () => {
+  const navigate = useNavigate();
   const [source, setSource] = useState("");
   const [customAddress, setCustomAddress] = useState("");
   const [customContact, setCustomContact] = useState("");
@@ -71,6 +73,7 @@ const CreateOrder = () => {
     toast.success("Заявка успешно создана!", {
       description: "Перевозчики получат уведомление о вашей заявке.",
     });
+    navigate("/my-orders");
   };
 
   return (
