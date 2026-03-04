@@ -24,8 +24,8 @@ const clientNav: NavItem[] = [
 const staffNav: NavItem[] = [
   { label: "Заявки", path: "/admin/requests", icon: List },
   { label: "Склады", path: "/admin/warehouses", icon: Warehouse },
+  { label: "Справочники", path: "/admin/directories", icon: Settings },
   { label: "Пользователи", path: "/admin/users", icon: Users },
-  { label: "Настройки", path: "/admin/settings", icon: Settings },
 ];
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {

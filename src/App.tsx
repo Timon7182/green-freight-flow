@@ -20,6 +20,9 @@ import Profile from "./pages/client/Profile";
 // Admin/Manager pages
 import RequestsAdmin from "./pages/admin/RequestsAdmin";
 import RequestDetailAdmin from "./pages/admin/RequestDetailAdmin";
+import WarehousesAdmin from "./pages/admin/WarehousesAdmin";
+import UsersAdmin from "./pages/admin/UsersAdmin";
+import DirectoriesAdmin from "./pages/admin/DirectoriesAdmin";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +47,9 @@ const App = () => (
             {/* Admin/Manager routes */}
             <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["manager", "admin"]}><RequestsAdmin /></ProtectedRoute>} />
             <Route path="/admin/requests/:id" element={<ProtectedRoute allowedRoles={["manager", "admin"]}><RequestDetailAdmin /></ProtectedRoute>} />
+            <Route path="/admin/warehouses" element={<ProtectedRoute allowedRoles={["admin"]}><WarehousesAdmin /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><UsersAdmin /></ProtectedRoute>} />
+            <Route path="/admin/directories" element={<ProtectedRoute allowedRoles={["admin"]}><DirectoriesAdmin /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
