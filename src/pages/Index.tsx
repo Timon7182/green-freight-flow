@@ -43,7 +43,7 @@ const Index = () => {
       <header className="border-b bg-card">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="JJ" className="h-8 w-8 object-contain" />
+            <img src="/logo.svg" alt="JJ" className="h-8 w-8 object-contain" />
             <span className="font-bold text-xl">JJ</span>
           </div>
           <div className="flex gap-2">
@@ -130,7 +130,7 @@ const Index = () => {
       <footer className="border-t py-8 px-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="JJ" className="h-5 w-5 object-contain" />
+            <img src="/logo.svg" alt="JJ" className="h-5 w-5 object-contain" />
             <span>JJ Logistics</span>
           </div>
           <span>© {new Date().getFullYear()}</span>
