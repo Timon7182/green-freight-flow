@@ -66,6 +66,7 @@ const CreateRequest = () => {
   const [supplierPhone, setSupplierPhone] = useState("");
   const [supplierWechat, setSupplierWechat] = useState("");
   const [supplierComment, setSupplierComment] = useState("");
+  const [supplierIntro, setSupplierIntro] = useState("");
   const [files, setFiles] = useState<File[]>([]);
 
   // Step 5
@@ -163,6 +164,7 @@ const CreateRequest = () => {
         supplier_phone: supplierPhone || null,
         supplier_wechat: supplierWechat || null,
         supplier_comment: supplierComment || null,
+        supplier_intro: supplierIntro || null,
         status: "submitted" as any,
         agreed_terms: agreedTerms,
         agreed_privacy: agreedPrivacy,
@@ -436,12 +438,24 @@ const CreateRequest = () => {
                 </div>
               </div>
 
+              {/* Supplier intro */}
+              <div className="space-y-2">
+                <Label>Как представиться поставщику</Label>
+                <Textarea
+                  value={supplierIntro}
+                  onChange={e => setSupplierIntro(e.target.value)}
+                  placeholder="Укажите от кого вы, название компании или ФИО, номер контракта/заказа — чтобы поставщик понял, о каком клиенте и грузе идёт речь"
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">Например: «Компания ТОО "Алмат", контракт №123 от 01.03.2026, партия текстиля»</p>
+              </div>
+
               {/* File upload */}
               <div className="space-y-2">
-                <Label>Фото / документы</Label>
+                <Label>Контракт, инвойс, фото груза</Label>
                 <label className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer hover:border-primary/40 hover:bg-accent/30 transition-colors">
                   <Upload className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Фото груза, упаковки, инвойсы, packing list</p>
+                  <p className="text-sm text-muted-foreground">Контракт, инвойс, packing list, фото груза</p>
                   <p className="text-xs text-muted-foreground">До 20 файлов, до 50 МБ каждый</p>
                   <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileChange} className="hidden" />
                 </label>

@@ -1,0 +1,1 @@
+ALTER TABLE public.shipment_requests ADD COLUMN supplier_intro TEXT;
