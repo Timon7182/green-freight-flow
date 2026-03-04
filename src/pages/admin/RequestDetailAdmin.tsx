@@ -16,6 +16,7 @@ import { RequestDocuments } from "@/components/RequestDocuments";
 import { RequestQuote } from "@/components/RequestQuote";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { notifyStatusChange } from "@/lib/notifications";
 
 const statusLabels: Record<string, string> = {
   draft: "Черновик", submitted: "Отправлена", calculating: "В расчёте",
@@ -93,6 +94,10 @@ const RequestDetailAdmin = () => {
   const handleStatusChange = async (newStatus: string) => {
     await supabase.from("shipment_requests").update({ status: newStatus as any }).eq("id", id);
     toast.success(`Статус: ${statusLabels[newStatus]}`);
+    // Notify client
+    if (request?.client_id) {
+      notifyStatusChange(id!, request.client_id, request.request_number, newStatus);
+    }
     fetchRequest();
   };
 
