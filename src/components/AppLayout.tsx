@@ -7,6 +7,7 @@ import {
   Menu, X, Users, Warehouse, LayoutDashboard, User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface NavItem {
   label: string;
@@ -54,9 +55,12 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen flex bg-background">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-64 border-r bg-card p-4">
-        <div className="flex items-center gap-2 px-2 mb-8">
-          <Package className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">SilkWay</span>
+        <div className="flex items-center justify-between px-2 mb-8">
+          <div className="flex items-center gap-2">
+            <Package className="h-6 w-6 text-primary" />
+            <span className="font-bold text-lg">SilkWay</span>
+          </div>
+          <NotificationBell />
         </div>
         <nav className="flex-1 space-y-1">
           {nav.map((item) => (
@@ -97,9 +101,12 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <Package className="h-5 w-5 text-primary" />
             <span className="font-bold">SilkWay</span>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
         </header>
         {mobileOpen && (
           <div className="md:hidden border-b bg-card px-4 py-3 space-y-1 animate-fade-in">

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Paperclip, Loader2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { notifyNewMessage } from "@/lib/notifications";
 
 interface Props {
   requestId: string;
@@ -66,6 +67,23 @@ export const RequestChat = ({ requestId }: Props) => {
     }
   }, [messages, user]);
 
+  const sendNotification = async (messagePreview: string | null) => {
+    if (!user) return;
+    const { data: req } = await supabase
+      .from("shipment_requests")
+      .select("client_id, request_number, assigned_manager_id")
+      .eq("id", requestId)
+      .single();
+    if (!req) return;
+    // If sender is client → notify manager; if sender is staff → notify client
+    const recipientId = req.client_id === user.id
+      ? req.assigned_manager_id
+      : req.client_id;
+    if (recipientId) {
+      notifyNewMessage(requestId, recipientId, req.request_number, messagePreview);
+    }
+  };
+
   const handleSend = async () => {
     if (!text.trim() || !user) return;
     setSending(true);
@@ -74,6 +92,7 @@ export const RequestChat = ({ requestId }: Props) => {
       sender_id: user.id,
       message: text.trim(),
     });
+    sendNotification(text.trim());
     setText("");
     setSending(false);
   };
@@ -93,6 +112,7 @@ export const RequestChat = ({ requestId }: Props) => {
         file_name: file.name,
         file_path: filePath,
       });
+      sendNotification(null);
     }
     setSending(false);
     if (fileInputRef.current) fileInputRef.current.value = "";

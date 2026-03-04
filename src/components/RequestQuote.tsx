@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, CheckCircle2, XCircle, Calculator } from "lucide-react";
 import { toast } from "sonner";
+import { notifyQuoteReady } from "@/lib/notifications";
 
 interface Props {
   requestId: string;
@@ -89,6 +90,16 @@ export const RequestQuote = ({ requestId, requestStatus, onStatusChange, isStaff
     // Update status to quoted
     if (requestStatus === "submitted" || requestStatus === "calculating") {
       await supabase.from("shipment_requests").update({ status: "quoted" as any }).eq("id", requestId);
+    }
+
+    // Notify the client that quote is ready
+    const { data: reqData } = await supabase
+      .from("shipment_requests")
+      .select("client_id, request_number")
+      .eq("id", requestId)
+      .single();
+    if (reqData?.client_id) {
+      notifyQuoteReady(requestId, reqData.client_id, reqData.request_number, totalAmount, currency);
     }
 
     toast.success("КП сохранено");
