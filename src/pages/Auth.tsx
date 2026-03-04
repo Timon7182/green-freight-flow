@@ -1,217 +1,116 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, UserRole } from "@/contexts/AuthContext";
-import { Truck, Package, Mail, Shield, User, ArrowLeft, ArrowRight } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { Loader2, Package } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [step, setStep] = useState(1);
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [company, setCompany] = useState("");
-  const [phone, setPhone] = useState("");
+  const { signIn, signUp, user } = useAuth();
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirm, setSignupConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleComplete = () => {
-    if (role) {
-      login(role, { email, name, company, phone });
-      navigate(role === "customer" ? "/customer/create" : "/carrier/orders");
+  if (user) {
+    navigate("/");
+    return null;
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail || !loginPassword) { toast.error("Заполните все поля"); return; }
+    setLoading(true);
+    const { error } = await signIn(loginEmail, loginPassword);
+    setLoading(false);
+    if (error) {
+      toast.error(error.message === "Invalid login credentials" ? "Неверный email или пароль" : error.message);
+    } else {
+      toast.success("Добро пожаловать!");
+      navigate("/");
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signupEmail || !signupPassword) { toast.error("Заполните все поля"); return; }
+    if (signupPassword.length < 6) { toast.error("Пароль должен быть не менее 6 символов"); return; }
+    if (signupPassword !== signupConfirm) { toast.error("Пароли не совпадают"); return; }
+    setLoading(true);
+    const { error } = await signUp(signupEmail, signupPassword);
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Регистрация успешна!", { description: "Проверьте почту для подтверждения аккаунта." });
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-lg animate-fade-in">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary">
-            <Truck className="h-6 w-6 text-primary-foreground" />
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
+            <Package className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold">SilkWay</h1>
+          <h1 className="text-3xl font-bold tracking-tight">SilkWay</h1>
+          <p className="text-muted-foreground mt-1">Логистика из Китая</p>
         </div>
-
-        {/* Progress */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3, 4].map((s) => (
-            <div
-              key={s}
-              className={cn(
-                "h-2 rounded-full transition-all duration-300",
-                s <= step ? "bg-primary w-10" : "bg-border w-6"
-              )}
-            />
-          ))}
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm">
-          {/* Step 1: Role */}
-          {step === 1 && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="text-center">
-                <h2 className="text-xl font-bold">Кто вы?</h2>
-                <p className="text-sm text-muted-foreground mt-1">Выберите вашу роль</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { id: "customer" as UserRole, label: "Заказчик", desc: "Заказываю перевозки", icon: Package },
-                  { id: "carrier" as UserRole, label: "Перевозчик", desc: "Перевожу грузы", icon: Truck },
-                ].map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => setRole(r.id)}
-                    className={cn(
-                      "flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all",
-                      role === r.id
-                        ? "border-primary bg-accent"
-                        : "border-border hover:border-primary/40 hover:bg-accent/50"
-                    )}
-                  >
-                    <div className={cn(
-                      "flex h-14 w-14 items-center justify-center rounded-xl transition-colors",
-                      role === r.id ? "bg-primary" : "bg-muted"
-                    )}>
-                      <r.icon className={cn("h-7 w-7", role === r.id ? "text-primary-foreground" : "text-muted-foreground")} />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-semibold">{r.label}</p>
-                      <p className="text-xs text-muted-foreground">{r.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <Button className="w-full" disabled={!role} onClick={() => setStep(2)}>
-                Далее <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-          )}
-
-          {/* Step 2: Email */}
-          {step === 2 && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="text-center">
-                <div className="flex justify-center mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent">
-                    <Mail className="h-6 w-6 text-accent-foreground" />
+        <Card>
+          <Tabs defaultValue="login">
+            <CardHeader className="pb-3">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Вход</TabsTrigger>
+                <TabsTrigger value="signup">Регистрация</TabsTrigger>
+              </TabsList>
+            </CardHeader>
+            <CardContent>
+              <TabsContent value="login" className="mt-0">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email</Label>
+                    <Input id="login-email" type="email" placeholder="your@email.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} autoComplete="email" />
                   </div>
-                </div>
-                <h2 className="text-xl font-bold">Введите email</h2>
-                <p className="text-sm text-muted-foreground mt-1">Мы отправим код подтверждения</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep(1)}>
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <Button className="flex-1" disabled={!email.includes("@")} onClick={() => setStep(3)}>
-                  Отправить код <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Verification */}
-          {step === 3 && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="text-center">
-                <div className="flex justify-center mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent">
-                    <Shield className="h-6 w-6 text-accent-foreground" />
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Пароль</Label>
+                    <Input id="login-password" type="password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} autoComplete="current-password" />
                   </div>
-                </div>
-                <h2 className="text-xl font-bold">Подтверждение</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Введите код из письма на {email}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="code">Код подтверждения</Label>
-                <Input
-                  id="code"
-                  placeholder="000000"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  maxLength={6}
-                  className="text-center text-2xl tracking-[0.5em] font-mono"
-                />
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep(2)}>
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <Button className="flex-1" disabled={code.length < 4} onClick={() => setStep(4)}>
-                  Подтвердить <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Profile */}
-          {step === 4 && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="text-center">
-                <div className="flex justify-center mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent">
-                    <User className="h-6 w-6 text-accent-foreground" />
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Войти
+                  </Button>
+                </form>
+              </TabsContent>
+              <TabsContent value="signup" className="mt-0">
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input id="signup-email" type="email" placeholder="your@email.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} autoComplete="email" />
                   </div>
-                </div>
-                <h2 className="text-xl font-bold">Расскажите о себе</h2>
-                <p className="text-sm text-muted-foreground mt-1">Контактная информация</p>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">ФИО</Label>
-                  <Input
-                    id="name"
-                    placeholder="Иванов Иван Иванович"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="company">Наименование компании</Label>
-                  <Input
-                    id="company"
-                    placeholder='ТОО "Компания"'
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Телефон</Label>
-                  <Input
-                    id="phone"
-                    placeholder="+7 777 123 4567"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep(3)}>
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <Button className="flex-1" disabled={!name} onClick={handleComplete}>
-                  Завершить регистрацию
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Пароль</Label>
+                    <Input id="signup-password" type="password" placeholder="Минимум 6 символов" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} autoComplete="new-password" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm">Повторите пароль</Label>
+                    <Input id="signup-confirm" type="password" placeholder="••••••••" value={signupConfirm} onChange={(e) => setSignupConfirm(e.target.value)} autoComplete="new-password" />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Зарегистрироваться
+                  </Button>
+                </form>
+              </TabsContent>
+            </CardContent>
+          </Tabs>
+        </Card>
       </div>
     </div>
   );

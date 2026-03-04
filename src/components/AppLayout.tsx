@@ -1,155 +1,132 @@
-import { ReactNode } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { ReactNode, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  Package,
-  PlusCircle,
-  FileText,
-  MessageCircle,
-  Newspaper,
-  ShoppingBag,
-  LogOut,
-  Truck,
-  User,
-  Menu,
-  X,
-} from "lucide-react";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { useAuth, AppRole } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import {
+  Package, Plus, List, Settings, LogOut,
+  Menu, X, Users, Warehouse, LayoutDashboard, User
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   label: string;
   path: string;
-  icon: ReactNode;
+  icon: React.ElementType;
 }
 
-const customerNav: NavItem[] = [
-  { label: "Новая заявка", path: "/customer/create", icon: <PlusCircle className="h-5 w-5" /> },
-  { label: "Мои заявки", path: "/customer/orders", icon: <FileText className="h-5 w-5" /> },
-  { label: "Чат", path: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
-  { label: "Новости", path: "/news", icon: <Newspaper className="h-5 w-5" /> },
-  { label: "Маркетплейс", path: "/marketplace", icon: <ShoppingBag className="h-5 w-5" /> },
+const clientNav: NavItem[] = [
+  { label: "Главная", path: "/client/dashboard", icon: LayoutDashboard },
+  { label: "Новая заявка", path: "/client/create", icon: Plus },
+  { label: "Мои заявки", path: "/client/requests", icon: List },
+  { label: "Профиль", path: "/client/profile", icon: User },
 ];
 
-const carrierNav: NavItem[] = [
-  { label: "Заявки", path: "/carrier/orders", icon: <Package className="h-5 w-5" /> },
-  { label: "Мои заказы", path: "/carrier/my-orders", icon: <FileText className="h-5 w-5" /> },
-  { label: "Чат", path: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
-  { label: "Новости", path: "/news", icon: <Newspaper className="h-5 w-5" /> },
-  { label: "Маркетплейс", path: "/marketplace", icon: <ShoppingBag className="h-5 w-5" /> },
+const staffNav: NavItem[] = [
+  { label: "Заявки", path: "/admin/requests", icon: List },
+  { label: "Склады", path: "/admin/warehouses", icon: Warehouse },
+  { label: "Пользователи", path: "/admin/users", icon: Users },
+  { label: "Настройки", path: "/admin/settings", icon: Settings },
 ];
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
-  const { role, user, logout } = useAuth();
+  const { role, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navItems = role === "customer" ? customerNav : carrierNav;
+  const nav = role === "client" ? clientNav : staffNav;
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
-  const handleLogout = () => {
-    logout();
+  const handleNav = (path: string) => {
+    navigate(path);
+    setMobileOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
     navigate("/auth");
   };
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-sidebar">
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <Truck className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">SilkWay</h1>
-            <p className="text-xs text-muted-foreground">
-              {role === "customer" ? "Заказчик" : "Перевозчик"}
-            </p>
-          </div>
-        </div>
+  const roleBadge = role === "admin" ? "Администратор" : role === "manager" ? "Менеджер" : "Клиент";
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => (
+  return (
+    <div className="min-h-screen flex bg-background">
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex flex-col w-64 border-r bg-card p-4">
+        <div className="flex items-center gap-2 px-2 mb-8">
+          <Package className="h-6 w-6 text-primary" />
+          <span className="font-bold text-lg">SilkWay</span>
+        </div>
+        <nav className="flex-1 space-y-1">
+          {nav.map((item) => (
             <button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNav(item.path)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                location.pathname === item.path
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                "flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                isActive(item.path)
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
-              {item.icon}
+              <item.icon className="h-4 w-4" />
               {item.label}
             </button>
           ))}
         </nav>
-
-        <div className="border-t border-border px-3 py-4 space-y-3">
-          <div className="flex items-center gap-3 px-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent">
-              <User className="h-4 w-4 text-accent-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            </div>
+        <div className="border-t pt-4 mt-4 space-y-3">
+          <div className="px-3">
+            <p className="text-sm font-medium truncate">{profile?.full_name || "Пользователь"}</p>
+            <p className="text-xs text-muted-foreground">{roleBadge}</p>
           </div>
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/50 transition-colors"
+            className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
             Выйти
           </button>
         </div>
       </aside>
 
-      {/* Mobile Header */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex md:hidden items-center justify-between border-b border-border px-4 py-3 bg-card">
+      {/* Mobile header */}
+      <div className="flex-1 flex flex-col">
+        <header className="md:hidden flex items-center justify-between border-b px-4 py-3 bg-card">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Truck className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <Package className="h-5 w-5 text-primary" />
             <span className="font-bold">SilkWay</span>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </header>
-
-        {/* Mobile Nav */}
         {mobileOpen && (
-          <div className="md:hidden border-b border-border bg-card px-4 py-2 animate-fade-in">
-            {navItems.map((item) => (
+          <div className="md:hidden border-b bg-card px-4 py-3 space-y-1 animate-fade-in">
+            {nav.map((item) => (
               <button
                 key={item.path}
-                onClick={() => { navigate(item.path); setMobileOpen(false); }}
+                onClick={() => handleNav(item.path)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  location.pathname === item.path
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground hover:bg-accent/50"
+                  "flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive(item.path)
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-accent"
                 )}
               >
-                {item.icon}
+                <item.icon className="h-4 w-4" />
                 {item.label}
               </button>
             ))}
             <button
               onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground"
+              className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-4 w-4" />
               Выйти
             </button>
           </div>
         )}
-
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
           {children}
         </main>
       </div>

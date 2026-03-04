@@ -4,16 +4,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import CreateOrder from "./pages/customer/CreateOrder";
-import MyOrders from "./pages/customer/MyOrders";
-import Orders from "./pages/carrier/Orders";
-import MyCarrierOrders from "./pages/carrier/MyCarrierOrders";
-import ChatPage from "./pages/Chat";
-import NewsPage from "./pages/News";
-import MarketplacePage from "./pages/Marketplace";
 import NotFound from "./pages/NotFound";
+
+// Client pages
+import ClientDashboard from "./pages/client/Dashboard";
+import CreateRequest from "./pages/client/CreateRequest";
+import MyRequests from "./pages/client/MyRequests";
+import Profile from "./pages/client/Profile";
+
+// Admin/Manager pages
+import RequestsAdmin from "./pages/admin/RequestsAdmin";
 
 const queryClient = new QueryClient();
 
@@ -27,13 +31,16 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/customer/create" element={<CreateOrder />} />
-            <Route path="/customer/orders" element={<MyOrders />} />
-            <Route path="/carrier/orders" element={<Orders />} />
-            <Route path="/carrier/my-orders" element={<MyCarrierOrders />} />
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/marketplace" element={<MarketplacePage />} />
+
+            {/* Client routes */}
+            <Route path="/client/dashboard" element={<ProtectedRoute allowedRoles={["client"]}><ClientDashboard /></ProtectedRoute>} />
+            <Route path="/client/create" element={<ProtectedRoute allowedRoles={["client"]}><CreateRequest /></ProtectedRoute>} />
+            <Route path="/client/requests" element={<ProtectedRoute allowedRoles={["client"]}><MyRequests /></ProtectedRoute>} />
+            <Route path="/client/profile" element={<ProtectedRoute allowedRoles={["client"]}><Profile /></ProtectedRoute>} />
+
+            {/* Admin/Manager routes */}
+            <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["manager", "admin"]}><RequestsAdmin /></ProtectedRoute>} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
