@@ -8,6 +8,11 @@
     <meta name="description" content="SilkWay — логистическая платформа для грузоперевозок">
     <meta name="author" content="Lovable" />
     <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#2d8a5e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
 
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d9e1d092-4612-431b-b355-d93f18ea7699/id-preview-0d610b61--c3e4f677-b400-4fc0-a015-3a32b0173006.lovable.app-1772529915945.png">
@@ -24,5 +29,10 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+      }
+    </script>
   </body>
 </html>
