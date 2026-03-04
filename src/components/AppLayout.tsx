@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import {
-  Package, Plus, List, Settings, LogOut,
+  Plus, List, Settings, LogOut,
   Menu, X, Users, Warehouse, LayoutDashboard, User, Moon, Sun
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -76,8 +76,8 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       <aside className="hidden md:flex flex-col w-64 border-r bg-card p-4">
         <div className="flex items-center justify-between px-2 mb-8">
           <div className="flex items-center gap-2">
-            <Package className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">SilkWay</span>
+            <img src="/logo.png" alt="JJ" className="h-7 w-7 object-contain" />
+            <span className="font-bold text-lg">JJ</span>
           </div>
           <div className="flex items-center gap-0.5">
             <LanguageSwitcher />
@@ -123,8 +123,8 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       <div className="flex-1 flex flex-col">
         <header className="md:hidden flex items-center justify-between border-b px-4 py-3 bg-card">
           <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            <span className="font-bold">SilkWay</span>
+            <img src="/logo.png" alt="JJ" className="h-6 w-6 object-contain" />
+            <span className="font-bold">JJ</span>
           </div>
           <div className="flex items-center gap-0.5">
             <LanguageSwitcher />

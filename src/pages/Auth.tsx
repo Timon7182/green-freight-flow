@@ -64,9 +64,9 @@ const Auth = () => {
             <LanguageSwitcher />
           </div>
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-            <Package className="w-8 h-8 text-primary" />
+            <img src="/logo.png" alt="JJ" className="w-10 h-10 object-contain" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">SilkWay</h1>
+          <h1 className="text-3xl font-bold tracking-tight">JJ</h1>
           <p className="text-muted-foreground mt-1">{t("auth.title")}</p>
         </div>
         <Card>

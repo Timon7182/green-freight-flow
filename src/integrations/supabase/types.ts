@@ -350,6 +350,7 @@ export type Database = {
           status: Database["public"]["Enums"]["request_status"] | null
           supplier_comment: string | null
           supplier_contact: string | null
+          supplier_intro: string | null
           supplier_phone: string | null
           supplier_wechat: string | null
           updated_at: string | null
@@ -391,6 +392,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["request_status"] | null
           supplier_comment?: string | null
           supplier_contact?: string | null
+          supplier_intro?: string | null
           supplier_phone?: string | null
           supplier_wechat?: string | null
           updated_at?: string | null
@@ -432,6 +434,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["request_status"] | null
           supplier_comment?: string | null
           supplier_contact?: string | null
+          supplier_intro?: string | null
           supplier_phone?: string | null
           supplier_wechat?: string | null
           updated_at?: string | null

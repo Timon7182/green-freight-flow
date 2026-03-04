@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Package, Truck, Shield, Globe, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Truck, Shield, Globe, ArrowRight, CheckCircle2, Package } from "lucide-react";
 
 const services = [
   { icon: Package, title: "Сборный груз", desc: "Доставка мелких партий из Китая с консолидацией на нашем складе" },
@@ -43,8 +43,8 @@ const Index = () => {
       <header className="border-b bg-card">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Package className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">SilkWay</span>
+            <img src="/logo.png" alt="JJ" className="h-8 w-8 object-contain" />
+            <span className="font-bold text-xl">JJ</span>
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => navigate("/auth")}>Войти</Button>
@@ -90,7 +90,7 @@ const Index = () => {
       {/* Advantages */}
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-10">Почему SilkWay?</h2>
+          <h2 className="text-2xl font-bold text-center mb-10">Почему JJ?</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {advantages.map((a, i) => (
               <div key={i} className="flex items-start gap-3 p-4">
@@ -130,8 +130,8 @@ const Index = () => {
       <footer className="border-t py-8 px-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            <span>SilkWay Logistics</span>
+            <img src="/logo.png" alt="JJ" className="h-5 w-5 object-contain" />
+            <span>JJ Logistics</span>
           </div>
           <span>© {new Date().getFullYear()}</span>
         </div>
