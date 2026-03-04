@@ -14,10 +14,12 @@ import NotFound from "./pages/NotFound";
 import ClientDashboard from "./pages/client/Dashboard";
 import CreateRequest from "./pages/client/CreateRequest";
 import MyRequests from "./pages/client/MyRequests";
+import RequestDetail from "./pages/client/RequestDetail";
 import Profile from "./pages/client/Profile";
 
 // Admin/Manager pages
 import RequestsAdmin from "./pages/admin/RequestsAdmin";
+import RequestDetailAdmin from "./pages/admin/RequestDetailAdmin";
 
 const queryClient = new QueryClient();
 
@@ -36,10 +38,12 @@ const App = () => (
             <Route path="/client/dashboard" element={<ProtectedRoute allowedRoles={["client"]}><ClientDashboard /></ProtectedRoute>} />
             <Route path="/client/create" element={<ProtectedRoute allowedRoles={["client"]}><CreateRequest /></ProtectedRoute>} />
             <Route path="/client/requests" element={<ProtectedRoute allowedRoles={["client"]}><MyRequests /></ProtectedRoute>} />
+            <Route path="/client/requests/:id" element={<ProtectedRoute allowedRoles={["client"]}><RequestDetail /></ProtectedRoute>} />
             <Route path="/client/profile" element={<ProtectedRoute allowedRoles={["client"]}><Profile /></ProtectedRoute>} />
 
             {/* Admin/Manager routes */}
             <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["manager", "admin"]}><RequestsAdmin /></ProtectedRoute>} />
+            <Route path="/admin/requests/:id" element={<ProtectedRoute allowedRoles={["manager", "admin"]}><RequestDetailAdmin /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
