@@ -28,7 +28,7 @@ const Index = () => {
     if (loading) return;
     if (user) {
       if (role === "manager" || role === "admin") {
-        navigate("/admin/requests", { replace: true });
+        navigate("/admin/dashboard", { replace: true });
       } else {
         navigate("/client/dashboard", { replace: true });
       }
