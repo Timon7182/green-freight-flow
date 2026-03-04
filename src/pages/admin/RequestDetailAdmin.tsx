@@ -7,10 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, ArrowLeft, Package, FileText, MessageSquare, MapPin, Truck, Settings, Activity } from "lucide-react";
+import { Loader2, ArrowLeft, Package, FileText, MessageSquare, MapPin, Truck, Settings, Activity, History } from "lucide-react";
 import { RequestChat } from "@/components/RequestChat";
 import { RequestDocuments } from "@/components/RequestDocuments";
 import { RequestQuote } from "@/components/RequestQuote";
@@ -80,7 +79,6 @@ const RequestDetailAdmin = () => {
       supabase.from("warehouses").select("name, city, full_address").eq("id", data.source_warehouse_id).single().then(r => setWarehouse(r.data));
     }
 
-    // Fetch managers
     const { data: roleData } = await supabase.from("user_roles").select("user_id").in("role", ["manager", "admin"]);
     if (roleData && roleData.length > 0) {
       const mgrIds = roleData.map(r => r.user_id);
@@ -91,10 +89,22 @@ const RequestDetailAdmin = () => {
 
   useEffect(() => { fetchRequest(); }, [id]);
 
+  const logHistory = async (field: string, oldVal: string | null, newVal: string | null) => {
+    if (!user || !id) return;
+    await supabase.from("request_history").insert({
+      request_id: id,
+      field_name: field,
+      old_value: oldVal,
+      new_value: newVal,
+      changed_by: user.id,
+    });
+  };
+
   const handleStatusChange = async (newStatus: string) => {
+    const oldStatus = request?.status;
     await supabase.from("shipment_requests").update({ status: newStatus as any }).eq("id", id);
+    await logHistory("status", oldStatus, newStatus);
     toast.success(`Статус: ${statusLabels[newStatus]}`);
-    // Notify client
     if (request?.client_id) {
       notifyStatusChange(id!, request.client_id, request.request_number, newStatus);
     }
@@ -102,8 +112,10 @@ const RequestDetailAdmin = () => {
   };
 
   const handleManagerAssign = async (managerId: string) => {
+    const oldVal = request?.assigned_manager_id || null;
     const val = managerId === "unassigned" ? null : managerId;
     await supabase.from("shipment_requests").update({ assigned_manager_id: val }).eq("id", id);
+    await logHistory("assigned_manager_id", oldVal, val);
     toast.success(val ? "Менеджер назначен" : "Менеджер снят");
     fetchRequest();
   };
@@ -112,6 +124,7 @@ const RequestDetailAdmin = () => {
     if (!newDeliveryStatus || !user || !id) return;
     setUpdatingStatus(true);
 
+    const oldDelivery = request?.delivery_status || null;
     await supabase.from("tracking_events").insert({
       request_id: id,
       status: newDeliveryStatus as any,
@@ -120,6 +133,7 @@ const RequestDetailAdmin = () => {
     });
 
     await supabase.from("shipment_requests").update({ delivery_status: newDeliveryStatus as any }).eq("id", id);
+    await logHistory("delivery_status", oldDelivery, newDeliveryStatus);
 
     toast.success("Статус доставки обновлён");
     setNewDeliveryStatus("");
@@ -155,9 +169,7 @@ const RequestDetailAdmin = () => {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Select value={request.status} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {businessStatuses.map(s => (
                   <SelectItem key={s} value={s}>{statusLabels[s]}</SelectItem>
@@ -165,9 +177,7 @@ const RequestDetailAdmin = () => {
               </SelectContent>
             </Select>
             <Select value={request.assigned_manager_id || "unassigned"} onValueChange={handleManagerAssign}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="Менеджер" />
-              </SelectTrigger>
+              <SelectTrigger className="w-52"><SelectValue placeholder="Менеджер" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="unassigned">Без менеджера</SelectItem>
                 {managers.map(m => (
@@ -195,6 +205,7 @@ const RequestDetailAdmin = () => {
             <TabsTrigger value="quote"><Settings className="h-4 w-4 mr-1" /> КП</TabsTrigger>
             <TabsTrigger value="docs"><FileText className="h-4 w-4 mr-1" /> Документы</TabsTrigger>
             <TabsTrigger value="tracking"><Activity className="h-4 w-4 mr-1" /> Трекинг</TabsTrigger>
+            <TabsTrigger value="history"><History className="h-4 w-4 mr-1" /> История</TabsTrigger>
             <TabsTrigger value="chat"><MessageSquare className="h-4 w-4 mr-1" /> Чат</TabsTrigger>
           </TabsList>
 
@@ -294,11 +305,13 @@ const RequestDetailAdmin = () => {
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Show tracking history */}
             <div className="mt-4">
               <TrackingHistory requestId={request.id} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <RequestChangeHistory requestId={request.id} />
           </TabsContent>
 
           <TabsContent value="chat">
@@ -342,6 +355,105 @@ const TrackingHistory = ({ requestId }: { requestId: string }) => {
             </div>
           </div>
         ))}
+      </CardContent>
+    </Card>
+  );
+};
+
+// Request change history component
+const RequestChangeHistory = ({ requestId }: { requestId: string }) => {
+  const [history, setHistory] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
+
+  const fieldLabels: Record<string, string> = {
+    status: "Статус",
+    assigned_manager_id: "Менеджер",
+    delivery_status: "Статус доставки",
+  };
+
+  const valueLabels: Record<string, Record<string, string>> = {
+    status: {
+      draft: "Черновик", submitted: "Отправлена", calculating: "В расчёте",
+      quoted: "Рассчитана", confirmed: "Подтверждена", awaiting_payment: "Ожидаем оплату",
+      paid: "Оплачена", in_progress: "В работе", completed: "Завершена", cancelled: "Отменена",
+    },
+    delivery_status: {
+      picked_up: "Забран", arrived_china_warehouse: "На складе КНР",
+      shipped: "Отправлен", at_border: "На границе", customs_cleared: "Таможня",
+      in_delivery: "В доставке", delivered: "Доставлен",
+    },
+  };
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("request_history")
+        .select("*")
+        .eq("request_id", requestId)
+        .order("created_at", { ascending: false });
+
+      const items = data || [];
+      setHistory(items);
+
+      const userIds = [...new Set(items.map(h => h.changed_by).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", userIds);
+        const map: Record<string, any> = {};
+        profs?.forEach(p => { map[p.id] = p; });
+        setProfiles(map);
+      }
+      setLoading(false);
+    };
+    fetch();
+  }, [requestId]);
+
+  const formatValue = (field: string, value: string | null) => {
+    if (!value || value === "none") return "—";
+    if (valueLabels[field]?.[value]) return valueLabels[field][value];
+    if (field === "assigned_manager_id" && profiles[value]) {
+      return profiles[value].full_name || profiles[value].email;
+    }
+    return value;
+  };
+
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  if (history.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <History className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2" />
+          <p className="text-sm text-muted-foreground">История изменений пуста</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-sm">История изменений</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        {history.map(h => {
+          const changer = h.changed_by ? profiles[h.changed_by] : null;
+          return (
+            <div key={h.id} className="flex items-start gap-3 text-sm border-b last:border-0 pb-3 last:pb-0">
+              <div className="h-2 w-2 rounded-full bg-muted-foreground mt-1.5 shrink-0" />
+              <div className="flex-1">
+                <p>
+                  <span className="font-medium">{fieldLabels[h.field_name] || h.field_name}</span>
+                  {": "}
+                  <span className="text-muted-foreground line-through mr-1">{formatValue(h.field_name, h.old_value)}</span>
+                  {"→ "}
+                  <span className="font-medium">{formatValue(h.field_name, h.new_value)}</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {changer ? (changer.full_name || changer.email) : "Система"} • {new Date(h.created_at).toLocaleString("ru-RU")}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </CardContent>
     </Card>
   );
