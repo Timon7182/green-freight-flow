@@ -22,6 +22,7 @@ const clientNav: NavItem[] = [
 ];
 
 const staffNav: NavItem[] = [
+  { label: "Главная", path: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Заявки", path: "/admin/requests", icon: List },
   { label: "Склады", path: "/admin/warehouses", icon: Warehouse },
   { label: "Справочники", path: "/admin/directories", icon: Settings },

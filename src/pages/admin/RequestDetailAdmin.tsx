@@ -53,6 +53,7 @@ const RequestDetailAdmin = () => {
   const [country, setCountry] = useState<any>(null);
   const [city, setCity] = useState<any>(null);
   const [warehouse, setWarehouse] = useState<any>(null);
+  const [managers, setManagers] = useState<any[]>([]);
 
   // Tracking
   const [newDeliveryStatus, setNewDeliveryStatus] = useState("");
@@ -77,6 +78,14 @@ const RequestDetailAdmin = () => {
     if (data?.source_warehouse_id) {
       supabase.from("warehouses").select("name, city, full_address").eq("id", data.source_warehouse_id).single().then(r => setWarehouse(r.data));
     }
+
+    // Fetch managers
+    const { data: roleData } = await supabase.from("user_roles").select("user_id").in("role", ["manager", "admin"]);
+    if (roleData && roleData.length > 0) {
+      const mgrIds = roleData.map(r => r.user_id);
+      const { data: mgrProfiles } = await supabase.from("profiles").select("id, full_name, email").in("id", mgrIds);
+      setManagers(mgrProfiles || []);
+    }
   };
 
   useEffect(() => { fetchRequest(); }, [id]);
@@ -84,6 +93,13 @@ const RequestDetailAdmin = () => {
   const handleStatusChange = async (newStatus: string) => {
     await supabase.from("shipment_requests").update({ status: newStatus as any }).eq("id", id);
     toast.success(`Статус: ${statusLabels[newStatus]}`);
+    fetchRequest();
+  };
+
+  const handleManagerAssign = async (managerId: string) => {
+    const val = managerId === "unassigned" ? null : managerId;
+    await supabase.from("shipment_requests").update({ assigned_manager_id: val }).eq("id", id);
+    toast.success(val ? "Менеджер назначен" : "Менеджер снят");
     fetchRequest();
   };
 
@@ -132,7 +148,7 @@ const RequestDetailAdmin = () => {
             <h1 className="text-2xl font-bold">{request.request_number}</h1>
             <p className="text-sm text-muted-foreground">{serviceLabels[request.service_type]}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Select value={request.status} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-48">
                 <SelectValue />
@@ -140,6 +156,17 @@ const RequestDetailAdmin = () => {
               <SelectContent>
                 {businessStatuses.map(s => (
                   <SelectItem key={s} value={s}>{statusLabels[s]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={request.assigned_manager_id || "unassigned"} onValueChange={handleManagerAssign}>
+              <SelectTrigger className="w-52">
+                <SelectValue placeholder="Менеджер" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Без менеджера</SelectItem>
+                {managers.map(m => (
+                  <SelectItem key={m.id} value={m.id}>{m.full_name || m.email}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

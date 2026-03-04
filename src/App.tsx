@@ -18,6 +18,7 @@ import RequestDetail from "./pages/client/RequestDetail";
 import Profile from "./pages/client/Profile";
 
 // Admin/Manager pages
+import DashboardAdmin from "./pages/admin/DashboardAdmin";
 import RequestsAdmin from "./pages/admin/RequestsAdmin";
 import RequestDetailAdmin from "./pages/admin/RequestDetailAdmin";
 import WarehousesAdmin from "./pages/admin/WarehousesAdmin";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/client/profile" element={<ProtectedRoute allowedRoles={["client"]}><Profile /></ProtectedRoute>} />
 
             {/* Admin/Manager routes */}
+            <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["manager", "admin"]}><DashboardAdmin /></ProtectedRoute>} />
             <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["manager", "admin"]}><RequestsAdmin /></ProtectedRoute>} />
             <Route path="/admin/requests/:id" element={<ProtectedRoute allowedRoles={["manager", "admin"]}><RequestDetailAdmin /></ProtectedRoute>} />
             <Route path="/admin/warehouses" element={<ProtectedRoute allowedRoles={["admin"]}><WarehousesAdmin /></ProtectedRoute>} />
