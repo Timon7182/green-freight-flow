@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,23 +13,6 @@ import { RequestChat } from "@/components/RequestChat";
 import { RequestDocuments } from "@/components/RequestDocuments";
 import { RequestTracking } from "@/components/RequestTracking";
 import { RequestQuote } from "@/components/RequestQuote";
-
-const statusLabels: Record<string, string> = {
-  draft: "Черновик", submitted: "Отправлена", calculating: "В расчёте",
-  quoted: "Рассчитана", confirmed: "Подтверждена", awaiting_payment: "Ожидаем оплату",
-  paid: "Оплачена", in_progress: "В работе", completed: "Завершена", cancelled: "Отменена",
-};
-
-const serviceLabels: Record<string, string> = {
-  consolidated_pickup: "Сборный (забор)", consolidated_warehouse: "Сборный (до склада)",
-  container_fcl: "Контейнер (FCL)", truck_ftl: "Фура (FTL)",
-};
-
-const deliveryStatusLabels: Record<string, string> = {
-  picked_up: "Забран у поставщика", arrived_china_warehouse: "Прибыл на склад в Китае",
-  shipped: "Отправлен", at_border: "На границе", customs_cleared: "Прошёл таможню",
-  in_delivery: "В доставке", delivered: "Доставлен",
-};
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground", submitted: "bg-primary/10 text-primary",
@@ -42,11 +26,13 @@ const RequestDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, tStatus, tService } = useLanguage();
   const [request, setRequest] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [country, setCountry] = useState<any>(null);
   const [city, setCity] = useState<any>(null);
   const [warehouse, setWarehouse] = useState<any>(null);
+  const [unreadChat, setUnreadChat] = useState(0);
 
   const fetchRequest = async () => {
     if (!id) return;
@@ -65,7 +51,21 @@ const RequestDetail = () => {
     }
   };
 
-  useEffect(() => { fetchRequest(); }, [id]);
+  const fetchUnreadChat = async () => {
+    if (!id || !user) return;
+    const { count } = await supabase
+      .from("chat_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("request_id", id)
+      .neq("sender_id", user.id)
+      .eq("is_read", false);
+    setUnreadChat(count || 0);
+  };
+
+  useEffect(() => {
+    fetchRequest();
+    fetchUnreadChat();
+  }, [id]);
 
   if (loading) return (
     <AppLayout>
@@ -76,9 +76,9 @@ const RequestDetail = () => {
   if (!request) return (
     <AppLayout>
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Заявка не найдена</p>
+        <p className="text-muted-foreground">{t("detail.notFound")}</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Назад
+          <ArrowLeft className="h-4 w-4 mr-2" /> {t("detail.back")}
         </Button>
       </div>
     </AppLayout>
@@ -90,32 +90,37 @@ const RequestDetail = () => {
         <div className="flex items-start justify-between">
           <div>
             <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-2">
-              <ArrowLeft className="h-4 w-4 mr-1" /> Назад
+              <ArrowLeft className="h-4 w-4 mr-1" /> {t("detail.back")}
             </Button>
             <h1 className="text-2xl font-bold">{request.request_number}</h1>
-            <p className="text-sm text-muted-foreground">{serviceLabels[request.service_type]}</p>
+            <p className="text-sm text-muted-foreground">{tService(request.service_type)}</p>
           </div>
-          <Badge className={statusColors[request.status] || ""}>{statusLabels[request.status]}</Badge>
+          <Badge className={statusColors[request.status] || ""}>{tStatus(request.status)}</Badge>
         </div>
 
-        {/* Delivery tracking bar */}
         {request.delivery_status && (
           <RequestTracking currentStatus={request.delivery_status} requestId={request.id} />
         )}
 
         <Tabs defaultValue="info">
           <TabsList className="w-full justify-start">
-            <TabsTrigger value="info"><Package className="h-4 w-4 mr-1" /> Инфо</TabsTrigger>
-            <TabsTrigger value="docs"><FileText className="h-4 w-4 mr-1" /> Документы</TabsTrigger>
-            <TabsTrigger value="quote"><Truck className="h-4 w-4 mr-1" /> КП</TabsTrigger>
-            <TabsTrigger value="chat"><MessageSquare className="h-4 w-4 mr-1" /> Чат</TabsTrigger>
+            <TabsTrigger value="info"><Package className="h-4 w-4 mr-1" /> {t("detail.info")}</TabsTrigger>
+            <TabsTrigger value="docs"><FileText className="h-4 w-4 mr-1" /> {t("detail.docs")}</TabsTrigger>
+            <TabsTrigger value="quote"><Truck className="h-4 w-4 mr-1" /> {t("detail.quote")}</TabsTrigger>
+            <TabsTrigger value="chat" className="relative">
+              <MessageSquare className="h-4 w-4 mr-1" /> {t("detail.chat")}
+              {unreadChat > 0 && (
+                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                  {unreadChat}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="info">
             <div className="grid gap-4 md:grid-cols-2">
-              {/* Source */}
               <Card>
-                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Откуда</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> {t("detail.from")}</CardTitle></CardHeader>
                 <CardContent className="text-sm space-y-1">
                   {warehouse ? (
                     <>
@@ -134,9 +139,8 @@ const RequestDetail = () => {
                 </CardContent>
               </Card>
 
-              {/* Destination */}
               <Card>
-                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Truck className="h-4 w-4 text-primary" /> Куда</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Truck className="h-4 w-4 text-primary" /> {t("detail.to")}</CardTitle></CardHeader>
                 <CardContent className="text-sm space-y-1">
                   {country && <p className="font-medium">{country.name_ru}</p>}
                   {city && <p>{city.name_ru}</p>}
@@ -146,9 +150,8 @@ const RequestDetail = () => {
                 </CardContent>
               </Card>
 
-              {/* Cargo */}
               <Card className="md:col-span-2">
-                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Package className="h-4 w-4 text-primary" /> Груз</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Package className="h-4 w-4 text-primary" /> {t("detail.cargo")}</CardTitle></CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     {request.cargo_name && <div><p className="text-muted-foreground">Товар</p><p className="font-medium">{request.cargo_name}</p></div>}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Loader2, Save } from "lucide-react";
 
 const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();
+  const { t } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
@@ -33,41 +35,41 @@ const Profile = () => {
       .eq("id", user.id);
     setSaving(false);
     if (error) {
-      toast.error("Ошибка сохранения");
+      toast.error(t("profile.error"));
     } else {
       await refreshProfile();
-      toast.success("Профиль обновлён");
+      toast.success(t("profile.saved"));
     }
   };
 
   return (
     <AppLayout>
       <div className="max-w-lg mx-auto animate-fade-in">
-        <h1 className="text-2xl font-bold mb-6">Профиль</h1>
+        <h1 className="text-2xl font-bold mb-6">{t("profile.title")}</h1>
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Личные данные</CardTitle>
+            <CardTitle className="text-lg">{t("profile.personalData")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>{t("auth.email")}</Label>
               <Input value={user?.email || ""} disabled />
             </div>
             <div className="space-y-2">
-              <Label>ФИО</Label>
-              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Иванов Иван Иванович" />
+              <Label>{t("profile.fullName")}</Label>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Компания</Label>
-              <Input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="ООО «Компания»" />
+              <Label>{t("profile.company")}</Label>
+              <Input value={company} onChange={(e) => setCompany(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Телефон</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+7 777 000 0000" />
+              <Label>{t("profile.phone")}</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
             <Button onClick={handleSave} disabled={saving} className="w-full">
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Сохранить
+              {t("profile.save")}
             </Button>
           </CardContent>
         </Card>
