@@ -5,8 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Package, Search } from "lucide-react";
+import { Loader2, Package, Search, Download } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   draft: "Черновик", submitted: "Отправлена", calculating: "В расчёте",
@@ -76,12 +77,42 @@ const RequestsAdmin = () => {
     return true;
   });
 
+  const exportToCSV = () => {
+    const header = ["Номер", "Тип услуги", "Статус", "Клиент", "Компания", "Груз", "Дата"];
+    const rows = filtered.map(r => {
+      const client = profiles[r.client_id];
+      return [
+        r.request_number || "",
+        serviceLabels[r.service_type] || r.service_type,
+        statusLabels[r.status] || r.status,
+        client?.full_name || client?.email || "",
+        client?.company || "",
+        r.cargo_name || "",
+        new Date(r.created_at).toLocaleDateString("ru-RU"),
+      ];
+    });
+    const bom = "\uFEFF";
+    const csv = bom + [header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `silkway-requests-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-2xl font-bold">Все заявки</h1>
-          <p className="text-muted-foreground text-sm">{filtered.length} из {requests.length} заявок</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Все заявки</h1>
+            <p className="text-muted-foreground text-sm">{filtered.length} из {requests.length} заявок</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={exportToCSV} disabled={filtered.length === 0}>
+            <Download className="h-4 w-4 mr-2" /> Экспорт
+          </Button>
         </div>
 
         {/* Filters */}
