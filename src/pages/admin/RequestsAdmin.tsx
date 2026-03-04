@@ -6,8 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Package, Search, Download } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const statusLabels: Record<string, string> = {
   draft: "Черновик", submitted: "Отправлена", calculating: "В расчёте",
@@ -33,36 +36,56 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
+const businessStatuses = [
+  "draft", "submitted", "calculating", "quoted", "confirmed",
+  "awaiting_payment", "paid", "in_progress", "completed", "cancelled",
+];
+
 const RequestsAdmin = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [serviceFilter, setServiceFilter] = useState("all");
   const [profiles, setProfiles] = useState<Record<string, any>>({});
+  const [managers, setManagers] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data } = await supabase
-        .from("shipment_requests")
-        .select("id, request_number, service_type, status, created_at, cargo_name, client_id, assigned_manager_id")
-        .order("created_at", { ascending: false });
+  // Bulk selection
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkManager, setBulkManager] = useState("");
+  const [bulkLoading, setBulkLoading] = useState(false);
 
-      setRequests(data || []);
+  const fetchData = async () => {
+    const { data } = await supabase
+      .from("shipment_requests")
+      .select("id, request_number, service_type, status, created_at, cargo_name, client_id, assigned_manager_id")
+      .order("created_at", { ascending: false });
 
-      // Fetch client profiles
-      const clientIds = [...new Set((data || []).map(r => r.client_id))];
-      if (clientIds.length > 0) {
-        const { data: profs } = await supabase.from("profiles").select("id, full_name, email, company").in("id", clientIds);
-        const map: Record<string, any> = {};
-        profs?.forEach(p => { map[p.id] = p; });
-        setProfiles(map);
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, []);
+    setRequests(data || []);
+
+    const clientIds = [...new Set((data || []).map(r => r.client_id))];
+    if (clientIds.length > 0) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, email, company").in("id", clientIds);
+      const map: Record<string, any> = {};
+      profs?.forEach(p => { map[p.id] = p; });
+      setProfiles(map);
+    }
+
+    // Fetch managers for bulk assign
+    const { data: roleData } = await supabase.from("user_roles").select("user_id").in("role", ["manager", "admin"]);
+    if (roleData && roleData.length > 0) {
+      const mgrIds = roleData.map(r => r.user_id);
+      const { data: mgrProfiles } = await supabase.from("profiles").select("id, full_name, email").in("id", mgrIds);
+      setManagers(mgrProfiles || []);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, []);
 
   const filtered = requests.filter(r => {
     if (statusFilter !== "all" && r.status !== statusFilter) return false;
@@ -76,6 +99,76 @@ const RequestsAdmin = () => {
     }
     return true;
   });
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map(r => r.id)));
+    }
+  };
+
+  const handleBulkStatusChange = async () => {
+    if (!bulkStatus || selected.size === 0) return;
+    setBulkLoading(true);
+    const ids = Array.from(selected);
+    for (const id of ids) {
+      await supabase.from("shipment_requests").update({ status: bulkStatus as any }).eq("id", id);
+      // Log history
+      if (user) {
+        const req = requests.find(r => r.id === id);
+        if (req) {
+          await supabase.from("request_history").insert({
+            request_id: id,
+            field_name: "status",
+            old_value: req.status,
+            new_value: bulkStatus,
+            changed_by: user.id,
+          });
+        }
+      }
+    }
+    toast.success(`Статус обновлён для ${ids.length} заявок`);
+    setBulkStatus("");
+    setSelected(new Set());
+    setBulkLoading(false);
+    fetchData();
+  };
+
+  const handleBulkManagerAssign = async () => {
+    if (!bulkManager || selected.size === 0) return;
+    setBulkLoading(true);
+    const ids = Array.from(selected);
+    const val = bulkManager === "unassigned" ? null : bulkManager;
+    for (const id of ids) {
+      await supabase.from("shipment_requests").update({ assigned_manager_id: val }).eq("id", id);
+      if (user) {
+        const req = requests.find(r => r.id === id);
+        if (req) {
+          await supabase.from("request_history").insert({
+            request_id: id,
+            field_name: "assigned_manager_id",
+            old_value: req.assigned_manager_id || "none",
+            new_value: val || "none",
+            changed_by: user.id,
+          });
+        }
+      }
+    }
+    toast.success(`Менеджер назначен для ${ids.length} заявок`);
+    setBulkManager("");
+    setSelected(new Set());
+    setBulkLoading(false);
+    fetchData();
+  };
 
   const exportToCSV = () => {
     const header = ["Номер", "Тип услуги", "Статус", "Клиент", "Компания", "Груз", "Дата"];
@@ -137,6 +230,38 @@ const RequestsAdmin = () => {
           </Select>
         </div>
 
+        {/* Bulk actions bar */}
+        {selected.size > 0 && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <span className="text-sm font-medium">Выбрано: {selected.size}</span>
+              <div className="flex flex-wrap gap-2 flex-1">
+                <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                  <SelectTrigger className="w-40 h-8 text-xs"><SelectValue placeholder="Сменить статус" /></SelectTrigger>
+                  <SelectContent>
+                    {businessStatuses.map(s => <SelectItem key={s} value={s}>{statusLabels[s]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button size="sm" variant="outline" onClick={handleBulkStatusChange} disabled={!bulkStatus || bulkLoading} className="h-8 text-xs">
+                  Применить статус
+                </Button>
+
+                <Select value={bulkManager} onValueChange={setBulkManager}>
+                  <SelectTrigger className="w-44 h-8 text-xs"><SelectValue placeholder="Назначить менеджера" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Без менеджера</SelectItem>
+                    {managers.map(m => <SelectItem key={m.id} value={m.id}>{m.full_name || m.email}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button size="sm" variant="outline" onClick={handleBulkManagerAssign} disabled={!bulkManager || bulkLoading} className="h-8 text-xs">
+                  Применить менеджера
+                </Button>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} className="h-8 text-xs">Сбросить</Button>
+            </CardContent>
+          </Card>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
@@ -148,12 +273,25 @@ const RequestsAdmin = () => {
           </Card>
         ) : (
           <div className="space-y-2">
+            {/* Select all */}
+            <div className="flex items-center gap-2 px-2 py-1">
+              <Checkbox
+                checked={selected.size === filtered.length && filtered.length > 0}
+                onCheckedChange={toggleAll}
+              />
+              <span className="text-xs text-muted-foreground">Выбрать все</span>
+            </div>
             {filtered.map((r) => {
               const client = profiles[r.client_id];
               return (
-                <Card key={r.id} className="cursor-pointer hover:bg-accent/30 transition-colors" onClick={() => navigate(`/admin/requests/${r.id}`)}>
-                  <CardContent className="py-3 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
+                <Card key={r.id} className="hover:bg-accent/30 transition-colors">
+                  <CardContent className="py-3 flex items-center gap-3">
+                    <Checkbox
+                      checked={selected.has(r.id)}
+                      onCheckedChange={() => toggleSelect(r.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/admin/requests/${r.id}`)}>
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{r.request_number}</p>
                         <span className="text-xs text-muted-foreground">{serviceLabels[r.service_type]}</span>
