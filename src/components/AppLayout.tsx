@@ -1,10 +1,10 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth, AppRole } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Package, Plus, List, Settings, LogOut,
-  Menu, X, Users, Warehouse, LayoutDashboard, User
+  Menu, X, Users, Warehouse, LayoutDashboard, User, Moon, Sun
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -30,11 +30,27 @@ const staffNav: NavItem[] = [
   { label: "Пользователи", path: "/admin/users", icon: Users },
 ];
 
+const useTheme = () => {
+  const [dark, setDark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("theme") === "dark" ||
+      (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  }, [dark]);
+
+  return { dark, toggle: () => setDark((d) => !d) };
+};
+
 export const AppLayout = ({ children }: { children: ReactNode }) => {
   const { role, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { dark, toggle: toggleTheme } = useTheme();
 
   const nav = role === "client" ? clientNav : staffNav;
   const isActive = (path: string) => location.pathname.startsWith(path);
@@ -60,7 +76,12 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <Package className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg">SilkWay</span>
           </div>
-          <NotificationBell />
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8">
+              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+            <NotificationBell />
+          </div>
         </div>
         <nav className="flex-1 space-y-1">
           {nav.map((item) => (
@@ -102,6 +123,9 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <span className="font-bold">SilkWay</span>
           </div>
           <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8">
+              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <NotificationBell />
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
