@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,10 +9,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Package } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
+  const { t } = useLanguage();
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
@@ -26,30 +29,30 @@ const Auth = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail || !loginPassword) { toast.error("Заполните все поля"); return; }
+    if (!loginEmail || !loginPassword) { toast.error(t("auth.fillAll")); return; }
     setLoading(true);
     const { error } = await signIn(loginEmail, loginPassword);
     setLoading(false);
     if (error) {
-      toast.error(error.message === "Invalid login credentials" ? "Неверный email или пароль" : error.message);
+      toast.error(error.message === "Invalid login credentials" ? t("auth.wrongCreds") : error.message);
     } else {
-      toast.success("Добро пожаловать!");
+      toast.success(t("auth.welcome"));
       navigate("/");
     }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupEmail || !signupPassword) { toast.error("Заполните все поля"); return; }
-    if (signupPassword.length < 6) { toast.error("Пароль должен быть не менее 6 символов"); return; }
-    if (signupPassword !== signupConfirm) { toast.error("Пароли не совпадают"); return; }
+    if (!signupEmail || !signupPassword) { toast.error(t("auth.fillAll")); return; }
+    if (signupPassword.length < 6) { toast.error(t("auth.minPassword")); return; }
+    if (signupPassword !== signupConfirm) { toast.error(t("auth.noMatch")); return; }
     setLoading(true);
     const { error } = await signUp(signupEmail, signupPassword);
     setLoading(false);
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Регистрация успешна!", { description: "Проверьте почту для подтверждения аккаунта." });
+      toast.success(t("auth.signupSuccess"), { description: t("auth.checkEmail") });
     }
   };
 
@@ -57,54 +60,57 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <div className="flex justify-end mb-4">
+            <LanguageSwitcher />
+          </div>
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
             <Package className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight">SilkWay</h1>
-          <p className="text-muted-foreground mt-1">Логистика из Китая</p>
+          <p className="text-muted-foreground mt-1">{t("auth.title")}</p>
         </div>
         <Card>
           <Tabs defaultValue="login">
             <CardHeader className="pb-3">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Вход</TabsTrigger>
-                <TabsTrigger value="signup">Регистрация</TabsTrigger>
+                <TabsTrigger value="login">{t("auth.login")}</TabsTrigger>
+                <TabsTrigger value="signup">{t("auth.signup")}</TabsTrigger>
               </TabsList>
             </CardHeader>
             <CardContent>
               <TabsContent value="login" className="mt-0">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email">{t("auth.email")}</Label>
                     <Input id="login-email" type="email" placeholder="your@email.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} autoComplete="email" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Пароль</Label>
+                    <Label htmlFor="login-password">{t("auth.password")}</Label>
                     <Input id="login-password" type="password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} autoComplete="current-password" />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Войти
+                    {t("auth.loginBtn")}
                   </Button>
                 </form>
               </TabsContent>
               <TabsContent value="signup" className="mt-0">
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email">{t("auth.email")}</Label>
                     <Input id="signup-email" type="email" placeholder="your@email.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} autoComplete="email" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Пароль</Label>
-                    <Input id="signup-password" type="password" placeholder="Минимум 6 символов" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} autoComplete="new-password" />
+                    <Label htmlFor="signup-password">{t("auth.password")}</Label>
+                    <Input id="signup-password" type="password" placeholder="••••••••" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} autoComplete="new-password" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-confirm">Повторите пароль</Label>
+                    <Label htmlFor="signup-confirm">{t("auth.confirmPassword")}</Label>
                     <Input id="signup-confirm" type="password" placeholder="••••••••" value={signupConfirm} onChange={(e) => setSignupConfirm(e.target.value)} autoComplete="new-password" />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Зарегистрироваться
+                    {t("auth.signupBtn")}
                   </Button>
                 </form>
               </TabsContent>

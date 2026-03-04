@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth, AppRole } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import {
   Package, Plus, List, Settings, LogOut,
@@ -8,26 +9,27 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   path: string;
   icon: React.ElementType;
 }
 
-const clientNav: NavItem[] = [
-  { label: "Главная", path: "/client/dashboard", icon: LayoutDashboard },
-  { label: "Новая заявка", path: "/client/create", icon: Plus },
-  { label: "Мои заявки", path: "/client/requests", icon: List },
-  { label: "Профиль", path: "/client/profile", icon: User },
+const clientNavItems: NavItem[] = [
+  { labelKey: "nav.home", path: "/client/dashboard", icon: LayoutDashboard },
+  { labelKey: "nav.newRequest", path: "/client/create", icon: Plus },
+  { labelKey: "nav.myRequests", path: "/client/requests", icon: List },
+  { labelKey: "nav.profile", path: "/client/profile", icon: User },
 ];
 
-const staffNav: NavItem[] = [
-  { label: "Главная", path: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Заявки", path: "/admin/requests", icon: List },
-  { label: "Склады", path: "/admin/warehouses", icon: Warehouse },
-  { label: "Справочники", path: "/admin/directories", icon: Settings },
-  { label: "Пользователи", path: "/admin/users", icon: Users },
+const staffNavItems: NavItem[] = [
+  { labelKey: "nav.home", path: "/admin/dashboard", icon: LayoutDashboard },
+  { labelKey: "nav.requests", path: "/admin/requests", icon: List },
+  { labelKey: "nav.warehouses", path: "/admin/warehouses", icon: Warehouse },
+  { labelKey: "nav.directories", path: "/admin/directories", icon: Settings },
+  { labelKey: "nav.users", path: "/admin/users", icon: Users },
 ];
 
 const useTheme = () => {
@@ -47,12 +49,13 @@ const useTheme = () => {
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
   const { role, profile, signOut } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { dark, toggle: toggleTheme } = useTheme();
 
-  const nav = role === "client" ? clientNav : staffNav;
+  const navItems = role === "client" ? clientNavItems : staffNavItems;
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   const handleNav = (path: string) => {
@@ -65,7 +68,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     navigate("/auth");
   };
 
-  const roleBadge = role === "admin" ? "Администратор" : role === "manager" ? "Менеджер" : "Клиент";
+  const roleBadge = role === "admin" ? t("role.admin") : role === "manager" ? t("role.manager") : t("role.client");
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -76,7 +79,8 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <Package className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg">SilkWay</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
+            <LanguageSwitcher />
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8">
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
@@ -84,7 +88,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
         <nav className="flex-1 space-y-1">
-          {nav.map((item) => (
+          {navItems.map((item) => (
             <button
               key={item.path}
               onClick={() => handleNav(item.path)}
@@ -96,13 +100,13 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
               )}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {t(item.labelKey)}
             </button>
           ))}
         </nav>
         <div className="border-t pt-4 mt-4 space-y-3">
           <div className="px-3">
-            <p className="text-sm font-medium truncate">{profile?.full_name || "Пользователь"}</p>
+            <p className="text-sm font-medium truncate">{profile?.full_name || t("role.user")}</p>
             <p className="text-xs text-muted-foreground">{roleBadge}</p>
           </div>
           <button
@@ -110,7 +114,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
             <LogOut className="h-4 w-4" />
-            Выйти
+            {t("nav.logout")}
           </button>
         </div>
       </aside>
@@ -122,7 +126,8 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
             <Package className="h-5 w-5 text-primary" />
             <span className="font-bold">SilkWay</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
+            <LanguageSwitcher />
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8">
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
@@ -134,7 +139,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
         </header>
         {mobileOpen && (
           <div className="md:hidden border-b bg-card px-4 py-3 space-y-1 animate-fade-in">
-            {nav.map((item) => (
+            {navItems.map((item) => (
               <button
                 key={item.path}
                 onClick={() => handleNav(item.path)}
@@ -146,7 +151,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
                 )}
               >
                 <item.icon className="h-4 w-4" />
-                {item.label}
+                {t(item.labelKey)}
               </button>
             ))}
             <button
@@ -154,7 +159,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
               className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
             >
               <LogOut className="h-4 w-4" />
-              Выйти
+              {t("nav.logout")}
             </button>
           </div>
         )}

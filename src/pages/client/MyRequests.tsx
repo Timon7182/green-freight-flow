@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,29 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Package, Plus } from "lucide-react";
 
-const statusLabels: Record<string, string> = {
-  draft: "Черновик",
-  submitted: "Отправлена",
-  calculating: "В расчёте",
-  quoted: "Рассчитана",
-  confirmed: "Подтверждена",
-  awaiting_payment: "Ожидаем оплату",
-  paid: "Оплачена",
-  in_progress: "В работе",
-  completed: "Завершена",
-  cancelled: "Отменена",
-};
-
-const serviceLabels: Record<string, string> = {
-  consolidated_pickup: "Сборный (забор)",
-  consolidated_warehouse: "Сборный (до склада)",
-  container_fcl: "Контейнер (FCL)",
-  truck_ftl: "Фура (FTL)",
-};
-
 const MyRequests = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, tStatus, tService } = useLanguage();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,7 +40,7 @@ const MyRequests = () => {
     if (list.length === 0) return (
       <div className="text-center py-8">
         <Package className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2" />
-        <p className="text-sm text-muted-foreground">Нет заявок</p>
+        <p className="text-sm text-muted-foreground">{t("requests.empty")}</p>
       </div>
     );
     return (
@@ -69,14 +51,14 @@ const MyRequests = () => {
               <div>
                 <p className="font-medium text-sm">{r.request_number}</p>
                 <p className="text-xs text-muted-foreground">
-                  {serviceLabels[r.service_type] || r.service_type}
+                  {tService(r.service_type)}
                   {r.cargo_name && ` • ${r.cargo_name}`}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {new Date(r.created_at).toLocaleDateString("ru-RU")}
                 </p>
               </div>
-              <Badge variant="secondary">{statusLabels[r.status] || r.status}</Badge>
+              <Badge variant="secondary">{tStatus(r.status)}</Badge>
             </CardContent>
           </Card>
         ))}
@@ -88,17 +70,17 @@ const MyRequests = () => {
     <AppLayout>
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Мои заявки</h1>
+          <h1 className="text-2xl font-bold">{t("requests.title")}</h1>
           <Button onClick={() => navigate("/client/create")}>
-            <Plus className="h-4 w-4 mr-2" /> Новая заявка
+            <Plus className="h-4 w-4 mr-2" /> {t("requests.new")}
           </Button>
         </div>
 
         <Tabs defaultValue="active">
           <TabsList>
-            <TabsTrigger value="active">Активные ({active.length})</TabsTrigger>
-            <TabsTrigger value="drafts">Черновики ({drafts.length})</TabsTrigger>
-            <TabsTrigger value="done">Завершённые ({done.length})</TabsTrigger>
+            <TabsTrigger value="active">{t("requests.activeTabs")} ({active.length})</TabsTrigger>
+            <TabsTrigger value="drafts">{t("requests.drafts")} ({drafts.length})</TabsTrigger>
+            <TabsTrigger value="done">{t("requests.done")} ({done.length})</TabsTrigger>
           </TabsList>
           <TabsContent value="active">{renderList(active)}</TabsContent>
           <TabsContent value="drafts">{renderList(drafts)}</TabsContent>

@@ -59,6 +59,7 @@ const RequestDetailAdmin = () => {
   const [newDeliveryStatus, setNewDeliveryStatus] = useState("");
   const [trackingComment, setTrackingComment] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [unreadChat, setUnreadChat] = useState(0);
 
   const fetchRequest = async () => {
     if (!id) return;
@@ -87,7 +88,18 @@ const RequestDetailAdmin = () => {
     }
   };
 
-  useEffect(() => { fetchRequest(); }, [id]);
+  const fetchUnreadChat = async () => {
+    if (!id || !user) return;
+    const { count } = await supabase
+      .from("chat_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("request_id", id)
+      .neq("sender_id", user.id)
+      .eq("is_read", false);
+    setUnreadChat(count || 0);
+  };
+
+  useEffect(() => { fetchRequest(); fetchUnreadChat(); }, [id]);
 
   const logHistory = async (field: string, oldVal: string | null, newVal: string | null) => {
     if (!user || !id) return;
@@ -206,7 +218,14 @@ const RequestDetailAdmin = () => {
             <TabsTrigger value="docs"><FileText className="h-4 w-4 mr-1" /> Документы</TabsTrigger>
             <TabsTrigger value="tracking"><Activity className="h-4 w-4 mr-1" /> Трекинг</TabsTrigger>
             <TabsTrigger value="history"><History className="h-4 w-4 mr-1" /> История</TabsTrigger>
-            <TabsTrigger value="chat"><MessageSquare className="h-4 w-4 mr-1" /> Чат</TabsTrigger>
+            <TabsTrigger value="chat" className="relative">
+              <MessageSquare className="h-4 w-4 mr-1" /> Чат
+              {unreadChat > 0 && (
+                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                  {unreadChat}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="info">
