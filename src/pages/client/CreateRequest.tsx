@@ -375,6 +375,16 @@ const CreateRequest = () => {
               {clarifyWithSupplier && (
                 <div className="space-y-3 rounded-lg bg-accent/50 p-4">
                   <div className="space-y-2">
+                    <Label>Как представиться поставщику <span className="text-destructive">*</span></Label>
+                    <Textarea
+                      value={supplierIntro}
+                      onChange={e => setSupplierIntro(e.target.value)}
+                      placeholder="Укажите имя заказчика или название компании, и какой груз — чтобы поставщик понял, о ком и о чём речь"
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">Например: «Иванов Алексей, ТОО "Алмат", партия текстиля по контракту №123»</p>
+                  </div>
+                  <div className="space-y-2">
                     <Label>Контакт поставщика</Label>
                     <Input value={supplierContact} onChange={e => setSupplierContact(e.target.value)} />
                   </div>
