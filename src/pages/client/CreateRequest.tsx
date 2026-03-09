@@ -439,7 +439,7 @@ const CreateRequest = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Вес брутто (кг)</Label>
+                  <Label>Вес брутто (кг) {!clarifyWithSupplier && <span className="text-destructive">*</span>}</Label>
                   <Input type="number" step="0.1" value={weightGross} onChange={e => setWeightGross(e.target.value)} />
                 </div>
                 <div className="space-y-2">
