@@ -432,7 +432,7 @@ const CreateRequest = () => {
                   <Input type="number" value={placesCount} onChange={e => setPlacesCount(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Объём (м³)</Label>
+                  <Label>Объём (м³) {!clarifyWithSupplier && <span className="text-destructive">*</span>}</Label>
                   <Input type="number" step="0.01" value={volumeM3} onChange={e => setVolumeM3(e.target.value)} />
                 </div>
               </div>
