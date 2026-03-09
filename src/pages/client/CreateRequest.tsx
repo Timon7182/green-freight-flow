@@ -448,17 +448,18 @@ const CreateRequest = () => {
                 </div>
               </div>
 
-              {/* Supplier intro */}
-              <div className="space-y-2">
-                <Label>Как представиться поставщику</Label>
-                <Textarea
-                  value={supplierIntro}
-                  onChange={e => setSupplierIntro(e.target.value)}
-                  placeholder="Укажите от кого вы, название компании или ФИО, номер контракта/заказа — чтобы поставщик понял, о каком клиенте и грузе идёт речь"
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground">Например: «Компания ТОО "Алмат", контракт №123 от 01.03.2026, партия текстиля»</p>
-              </div>
+              {/* Supplier intro - shown only when NOT clarifying (moved into clarify block above) */}
+              {!clarifyWithSupplier && (
+                <div className="space-y-2">
+                  <Label>Как представиться поставщику</Label>
+                  <Textarea
+                    value={supplierIntro}
+                    onChange={e => setSupplierIntro(e.target.value)}
+                    placeholder="Укажите от кого вы, название компании или ФИО, номер контракта/заказа"
+                    rows={2}
+                  />
+                </div>
+              )}
 
               {/* File upload */}
               <div className="space-y-2">
