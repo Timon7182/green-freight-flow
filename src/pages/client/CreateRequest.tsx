@@ -116,8 +116,8 @@ const CreateRequest = () => {
       return true;
     }
     if (step === 3) {
-      if (clarifyWithSupplier) return !!supplierPhone;
-      return !!cargoName;
+      if (clarifyWithSupplier) return !!supplierPhone && !!supplierIntro && !!cargoName;
+      return !!cargoName && !!weightGross && !!volumeM3;
     }
     if (step === 4) return agreedTerms && agreedPrivacy && agreedOffer;
     return true;
