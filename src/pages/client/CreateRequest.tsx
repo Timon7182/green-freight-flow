@@ -116,8 +116,8 @@ const CreateRequest = () => {
       return true;
     }
     if (step === 3) {
-      if (clarifyWithSupplier) return !!supplierPhone;
-      return !!cargoName;
+      if (clarifyWithSupplier) return !!supplierPhone && !!supplierIntro && !!cargoName;
+      return !!cargoName && !!weightGross && !!volumeM3;
     }
     if (step === 4) return agreedTerms && agreedPrivacy && agreedOffer;
     return true;
@@ -375,6 +375,16 @@ const CreateRequest = () => {
               {clarifyWithSupplier && (
                 <div className="space-y-3 rounded-lg bg-accent/50 p-4">
                   <div className="space-y-2">
+                    <Label>Как представиться поставщику <span className="text-destructive">*</span></Label>
+                    <Textarea
+                      value={supplierIntro}
+                      onChange={e => setSupplierIntro(e.target.value)}
+                      placeholder="Укажите имя заказчика или название компании, и какой груз — чтобы поставщик понял, о ком и о чём речь"
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">Например: «Иванов Алексей, ТОО "Алмат", партия текстиля по контракту №123»</p>
+                  </div>
+                  <div className="space-y-2">
                     <Label>Контакт поставщика</Label>
                     <Input value={supplierContact} onChange={e => setSupplierContact(e.target.value)} />
                   </div>
@@ -396,7 +406,7 @@ const CreateRequest = () => {
               )}
 
               <div className="space-y-2">
-                <Label>Наименование товара {!clarifyWithSupplier && <span className="text-destructive">*</span>}</Label>
+                <Label>Наименование товара <span className="text-destructive">*</span></Label>
                 <Input value={cargoName} onChange={e => setCargoName(e.target.value)} placeholder="Например: текстиль, электроника" />
               </div>
 
@@ -422,14 +432,14 @@ const CreateRequest = () => {
                   <Input type="number" value={placesCount} onChange={e => setPlacesCount(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Объём (м³)</Label>
+                  <Label>Объём (м³) {!clarifyWithSupplier && <span className="text-destructive">*</span>}</Label>
                   <Input type="number" step="0.01" value={volumeM3} onChange={e => setVolumeM3(e.target.value)} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Вес брутто (кг)</Label>
+                  <Label>Вес брутто (кг) {!clarifyWithSupplier && <span className="text-destructive">*</span>}</Label>
                   <Input type="number" step="0.1" value={weightGross} onChange={e => setWeightGross(e.target.value)} />
                 </div>
                 <div className="space-y-2">
@@ -438,17 +448,18 @@ const CreateRequest = () => {
                 </div>
               </div>
 
-              {/* Supplier intro */}
-              <div className="space-y-2">
-                <Label>Как представиться поставщику</Label>
-                <Textarea
-                  value={supplierIntro}
-                  onChange={e => setSupplierIntro(e.target.value)}
-                  placeholder="Укажите от кого вы, название компании или ФИО, номер контракта/заказа — чтобы поставщик понял, о каком клиенте и грузе идёт речь"
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground">Например: «Компания ТОО "Алмат", контракт №123 от 01.03.2026, партия текстиля»</p>
-              </div>
+              {/* Supplier intro - shown only when NOT clarifying (moved into clarify block above) */}
+              {!clarifyWithSupplier && (
+                <div className="space-y-2">
+                  <Label>Как представиться поставщику</Label>
+                  <Textarea
+                    value={supplierIntro}
+                    onChange={e => setSupplierIntro(e.target.value)}
+                    placeholder="Укажите от кого вы, название компании или ФИО, номер контракта/заказа"
+                    rows={2}
+                  />
+                </div>
+              )}
 
               {/* File upload */}
               <div className="space-y-2">

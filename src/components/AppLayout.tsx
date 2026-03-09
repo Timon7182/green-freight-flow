@@ -1,4 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
+import { FaqChatWidget } from "@/components/FaqChatWidget";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -167,6 +168,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           {children}
         </main>
       </div>
+      <FaqChatWidget />
     </div>
   );
 };
