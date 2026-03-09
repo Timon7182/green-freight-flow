@@ -168,6 +168,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           {children}
         </main>
       </div>
+      <FaqChatWidget />
     </div>
   );
 };
