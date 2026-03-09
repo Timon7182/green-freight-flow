@@ -406,7 +406,7 @@ const CreateRequest = () => {
               )}
 
               <div className="space-y-2">
-                <Label>Наименование товара {!clarifyWithSupplier && <span className="text-destructive">*</span>}</Label>
+                <Label>Наименование товара <span className="text-destructive">*</span></Label>
                 <Input value={cargoName} onChange={e => setCargoName(e.target.value)} placeholder="Например: текстиль, электроника" />
               </div>
 
